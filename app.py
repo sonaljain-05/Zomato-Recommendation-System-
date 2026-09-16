@@ -1,4 +1,4 @@
-
+```python
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -11,62 +11,54 @@ st.set_page_config(
     layout="wide"
 )
 
-# ---------- STYLE ----------
+# ---------- CSS ----------
 st.markdown("""
 <style>
 .stApp {
-    background: linear-gradient(135deg,#08090d,#170b18,#0b1220);
+    background: linear-gradient(135deg, #0b0b12, #1b0d1c, #101525);
     color: white;
 }
 .hero {
     padding: 35px;
     border-radius: 25px;
-    background: linear-gradient(120deg,#ff1768,#7c35ff);
+    background: linear-gradient(120deg, #ff1768, #7c35ff);
     margin-bottom: 25px;
 }
 .hero h1 {
-    font-size: 45px;
     color: white;
-    margin: 0;
-}
-.hero p {
-    font-size: 18px;
-    color: #eee;
+    font-size: 42px;
 }
 .card {
-    background: rgba(255,255,255,.08);
-    border: 1px solid rgba(255,255,255,.15);
-    border-radius: 22px;
-    padding: 14px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 15px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 30px #0008;
+    border: 1px solid rgba(255,255,255,0.15);
 }
 .card img {
     width: 100%;
-    height: 190px;
+    height: 180px;
     object-fit: cover;
-    border-radius: 16px;
+    border-radius: 15px;
 }
 .badge {
     background: #ff1768;
-    padding: 5px 12px;
+    padding: 6px 12px;
     border-radius: 20px;
 }
-.stButton > button {
+.stButton button {
     width: 100%;
-    height: 50px;
-    border: 0;
-    border-radius: 14px;
-    background: linear-gradient(90deg,#ff1768,#8b35ff);
+    background: linear-gradient(90deg,#ff1768,#7c35ff);
     color: white;
+    border: none;
+    border-radius: 12px;
+    height: 50px;
     font-weight: bold;
-    font-size: 17px;
 }
 </style>
 """, unsafe_allow_html=True)
 
-
-# ---------- LOAD DATA ----------
+# ---------- LOAD ----------
 df = pd.read_pickle("restaurant_data_small.pkl")
 
 z = np.load("tfidf_matrix.npz", allow_pickle=False)
@@ -76,26 +68,16 @@ tfidf = csr_matrix(
     shape=tuple(z["shape"])
 )
 
-
-# ---------- HERO ----------
+# ---------- HEADER ----------
 st.markdown("""
 <div class="hero">
     <h1>🍽️ Zomato AI</h1>
-    <p>Discover delicious restaurants using AI-powered recommendations</p>
+    <p>Smart Restaurant Recommendation System</p>
 </div>
 """, unsafe_allow_html=True)
-
 
 # ---------- STATS ----------
 c1, c2, c3 = st.columns(3)
 
-c1.metric("🍴 Restaurants", f"{len(df):,}")
-c2.metric("⭐ Average Rating", f"{df['rate'].mean():.1f}")
-c3.metric("🧠 AI Features", f"{tfidf.shape[1]:,}")
-
-
-# ---------- SELECT RESTAURANT ----------
-st.write("")
-
-names = sorted(df["n]()
-
+c1.metric("🍴 Restaurants", len(df))
+```
