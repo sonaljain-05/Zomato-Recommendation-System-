@@ -6,59 +6,12 @@ from scipy.sparse import csr_matrix
 from sklearn.metrics.pairwise import cosine_similarity
 
 st.set_page_config(
-    page_title="Zomato AI",
-    page_icon="🍽️",
-    layout="wide"
+    page_title="Zomato Recommendation",
+    page_icon="🍴",
+    layout="centered"
 )
 
-# ---------- CSS ----------
-st.markdown("""
-<style>
-.stApp {
-    background: linear-gradient(135deg, #0b0b12, #1b0d1c, #101525);
-    color: white;
-}
-.hero {
-    padding: 35px;
-    border-radius: 25px;
-    background: linear-gradient(120deg, #ff1768, #7c35ff);
-    margin-bottom: 25px;
-}
-.hero h1 {
-    color: white;
-    font-size: 42px;
-}
-.card {
-    background: rgba(255,255,255,0.08);
-    border-radius: 20px;
-    padding: 15px;
-    margin-bottom: 20px;
-    border: 1px solid rgba(255,255,255,0.15);
-}
-.card img {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-    border-radius: 15px;
-}
-.badge {
-    background: #ff1768;
-    padding: 6px 12px;
-    border-radius: 20px;
-}
-.stButton button {
-    width: 100%;
-    background: linear-gradient(90deg,#ff1768,#7c35ff);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    height: 50px;
-    font-weight: bold;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# ---------- LOAD ----------
+# ---------- DATA ----------
 df = pd.read_pickle("restaurant_data_small.pkl")
 
 z = np.load("tfidf_matrix.npz", allow_pickle=False)
@@ -69,15 +22,83 @@ tfidf = csr_matrix(
 )
 
 # ---------- HEADER ----------
-st.markdown("""
-<div class="hero">
-    <h1>🍽️ Zomato AI</h1>
-    <p>Smart Restaurant Recommendation System</p>
-</div>
-""", unsafe_allow_html=True)
+st.title("🍴 Zomato Restaurant Finder")
+st.caption("Find restaurants similar to your favourite place")
 
-# ---------- STATS ----------
-c1, c2, c3 = st.columns(3)
+# ---------- RESTAURANT SELECT ----------
+names = sorted(df["name"].dropna().unique())
 
-c1.metric("🍴 Restaurants", len(df))
+selected = st.selectbox(
+    "Select Restaurant",
+    names
+)
+
+# ---------- BUTTON ----------
+if st.button(
+    "🔍 Find Similar Restaurants",
+    type="primary",
+    width="stretch"
+):
+
+    index = df[
+        df["name"].str.lower() == selected.lower()
+    ].index[0]
+
+    scores = cosine_similarity(
+        tfidf[index],
+        tfidf
+    )[0]
+
+    top = scores.argsort()[-11:][::-1]
+    top = [i for i in top if i != index][:10]
+
+    st.subheader("Recommended Restaurants")
+
+    images = [
+        "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38",
+        "https://images.unsplash.com/photo-1563379926898-05f4575a45d8",
+        "https://images.unsplash.com/photo-1555939594-58d7cb561ad1",
+        "https://images.unsplash.com/photo-1513104890138-7c749659a591",
+        "https://images.unsplash.com/photo-1547592180-85f173990554"
+    ]
+
+    for row in range(0, len(top), 2):
+
+        col1, col2 = st.columns(2)
+
+        for col, i in zip(
+            [col1, col2],
+            top[row:row + 2]
+        ):
+
+            r = df.iloc[i]
+
+            with col:
+
+                st.image(
+                    images[i % len(images)],
+                    width=300
+                )
+
+                st.markdown(
+                    f"### 🍴 {r['name']}"
+                )
+
+                st.write(
+                    f"📍 {r['location']}"
+                )
+
+                st.write(
+                    f"🍛 {r['cuisines']}"
+                )
+
+                st.write(
+                    f"⭐ {r['rate']}   •   👍 {r['votes']:,}"
+                )
+
+                st.caption(
+                    f"AI Similarity: {scores[i]:.1%}"
+                )
+
+                st.divider()
 
