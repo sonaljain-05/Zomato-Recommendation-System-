@@ -3,210 +3,62 @@ import pandas as pd
 import numpy as np
 from scipy.sparse import csr_matrix
 from sklearn.metrics.pairwise import cosine_similarity
-import os
 
+st.set_page_config(page_title="Zomato AI", page_icon="🍽️", layout="wide")
 
-# -----------------------------
-# Page Settings
-# -----------------------------
+# ---------- STYLE ----------
+st.markdown("""
+<style>
+.main {background: #fff7f8;}
+h1 {color:#b1124b;}
+.stButton>button {
+    width:100%; border-radius:12px; height:3em;
+    background:#b1124b; color:white; font-weight:bold;
+}
+.card {
+    padding:20px; border-radius:18px; margin:12px 0;
+    background:white; box-shadow:0 4px 15px #ddd;
+}
+</style>
+""", unsafe_allow_html=True)
 
-st.set_page_config(
-    page_title="Zomato Recommendation System",
-    page_icon="🍴",
-    layout="wide"
-)
-
-
-# -----------------------------
-# Check Files
-# -----------------------------
-
-if not os.path.exists("restaurant_data_small.pkl"):
-    st.error("restaurant_data_small.pkl file not found!")
-    st.stop()
-
-if not os.path.exists("tfidf_matrix.npz"):
-    st.error("tfidf_matrix.npz file not found!")
-    st.stop()
-
-
-# -----------------------------
-# Load Restaurant Data
-# -----------------------------
-
+# ---------- LOAD ----------
 df = pd.read_pickle("restaurant_data_small.pkl")
 
-
-# -----------------------------
-# Load TF-IDF Matrix Manually
-# -----------------------------
-
-try:
-
-    npz = np.load(
-        "tfidf_matrix.npz",
-        allow_pickle=False
-    )
-
-    data = npz["data"]
-    indices = npz["indices"]
-    indptr = npz["indptr"]
-    shape = tuple(npz["shape"])
-
-    tfidf_matrix = csr_matrix(
-        (data, indices, indptr),
-        shape=shape
-    )
-
-except Exception as e:
-
-    st.error("TF-IDF matrix could not be loaded.")
-    st.code(str(e))
-    st.stop()
-
-
-# -----------------------------
-# Check Data and Matrix
-# -----------------------------
-
-if tfidf_matrix.shape[0] != len(df):
-
-    st.error(
-        f"Data mismatch: TF-IDF matrix has "
-        f"{tfidf_matrix.shape[0]} rows but restaurant data has "
-        f"{len(df)} rows."
-    )
-
-    st.stop()
-
-
-# -----------------------------
-# Title
-# -----------------------------
-
-st.title("🍴 Zomato Restaurant Recommendation System")
-
-st.write(
-    "Find similar restaurants based on cuisines, "
-    "location, restaurant type and customer reviews."
+z = np.load("tfidf_matrix.npz", allow_pickle=False)
+tfidf = csr_matrix(
+    (z["data"], z["indices"], z["indptr"]),
+    shape=tuple(z["shape"])
 )
 
+# ---------- HEADER ----------
+st.title("🍽️ Zomato AI Recommender")
+st.caption("✨ Discover restaurants similar to your choice")
 
-# -----------------------------
-# Restaurant Selection
-# -----------------------------
+names = sorted(df["name"].dropna().unique())
+selected = st.selectbox("🔎 Choose a restaurant", names)
 
-restaurant_names = sorted(
-    df["name"].dropna().unique()
-)
+# ---------- RECOMMEND ----------
+if st.button("🚀 Find Similar Restaurants"):
 
-selected_restaurant = st.selectbox(
-    "Select a Restaurant",
-    restaurant_names
-)
+    idx = df[df["name"].str.lower() == selected.lower()].index[0]
 
+    scores = cosine_similarity(tfidf[idx], tfidf)[0]
+    top = scores.argsort()[-11:][::-1]
+    top = [i for i in top if i != idx][:10]
 
-# -----------------------------
-# Recommendation Function
-# -----------------------------
+    st.subheader("💡 Recommended For You")
 
-def recommend(name):
+    for i in top:
+        r = df.iloc[i]
 
-    matches = df[
-        df["name"].str.lower() == name.lower()
-    ]
-
-    if len(matches) == 0:
-        return pd.DataFrame()
-
-    index = matches.index[0]
-
-    scores = cosine_similarity(
-        tfidf_matrix[index],
-        tfidf_matrix
-    )[0]
-
-    top_indices = scores.argsort()[-11:][::-1]
-
-    top_indices = [
-        i for i in top_indices
-        if i != index
-    ][:10]
-
-    result = df.iloc[top_indices].copy()
-
-    result["Similarity Score"] = scores[top_indices]
-
-    return result[
-        [
-            "name",
-            "location",
-            "cuisines",
-            "rate",
-            "votes",
-            "Similarity Score"
-        ]
-    ]
-
-
-# -----------------------------
-# Recommendation Button
-# -----------------------------
-
-if st.button("🔍 Get Recommendations"):
-
-    recommendations = recommend(
-        selected_restaurant
-    )
-
-    st.subheader(
-        f"Recommended Restaurants for {selected_restaurant}"
-    )
-
-    if len(recommendations) > 0:
-
-        for _, row in recommendations.iterrows():
-
-            st.markdown("---")
-
-            st.subheader(row["name"])
-
-            col1, col2 = st.columns(2)
-
-            with col1:
-
-                st.write(
-                    "📍 **Location:**",
-                    row["location"]
-                )
-
-                st.write(
-                    "🍽️ **Cuisines:**",
-                    row["cuisines"]
-                )
-
-            with col2:
-
-                st.write(
-                    "⭐ **Rating:**",
-                    row["rate"]
-                )
-
-                st.write(
-                    "👍 **Votes:**",
-                    row["votes"]
-                )
-
-                st.write(
-                    "📊 **Similarity:**",
-                    round(
-                        row["Similarity Score"],
-                        3
-                    )
-                )
-
-    else:
-
-        st.warning(
-            "Restaurant not found."
-        )
+        st.markdown(f"""
+        <div class="card">
+        <h3>🍴 {r['name']}</h3>
+        📍 {r['location']}<br>
+        🍛 {r['cuisines']}<br>
+        ⭐ Rating: {r['rate']} &nbsp;&nbsp;
+        👍 Votes: {r['votes']}<br>
+        📊 Similarity: {scores[i]:.3f}
+        </div>
+        """, unsafe_allow_html=True)
