@@ -5,6 +5,10 @@ from sklearn.metrics.pairwise import cosine_similarity
 import os
 
 
+# --------------------------------------------------
+# Page Configuration
+# --------------------------------------------------
+
 st.set_page_config(
     page_title="Zomato Recommendation System",
     page_icon="🍴",
@@ -12,9 +16,9 @@ st.set_page_config(
 )
 
 
-# -----------------------------
-# Check Files
-# -----------------------------
+# --------------------------------------------------
+# Check Required Files
+# --------------------------------------------------
 
 if not os.path.exists("restaurant_data_small.pkl"):
     st.error("restaurant_data_small.pkl file not found!")
@@ -25,41 +29,48 @@ if not os.path.exists("tfidf_matrix.npz"):
     st.stop()
 
 
-# -----------------------------
-# Load Data
-# -----------------------------
+# --------------------------------------------------
+# Load Restaurant Data
+# --------------------------------------------------
 
 df = pd.read_pickle("restaurant_data_small.pkl")
 
 
-# -----------------------------
+# --------------------------------------------------
 # Load TF-IDF Matrix
-# -----------------------------
+# --------------------------------------------------
 
 try:
-    tfidf_matrix = load_npz("tfidf_matrix.npz")
+
+    tfidf_matrix = load_npz(
+        "tfidf_matrix.npz",
+        allow_pickle=True
+    )
 
 except Exception as e:
+
     st.error("TF-IDF matrix file could not be loaded.")
     st.code(str(e))
     st.stop()
 
 
-# -----------------------------
-# Check Shape
-# -----------------------------
+# --------------------------------------------------
+# Check Data and Matrix
+# --------------------------------------------------
 
 if tfidf_matrix.shape[0] != len(df):
+
     st.error(
         f"Data mismatch: Matrix has {tfidf_matrix.shape[0]} rows "
         f"but dataframe has {len(df)} rows."
     )
+
     st.stop()
 
 
-# -----------------------------
-# Title
-# -----------------------------
+# --------------------------------------------------
+# Application Title
+# --------------------------------------------------
 
 st.title("🍴 Zomato Restaurant Recommendation System")
 
@@ -69,9 +80,9 @@ st.write(
 )
 
 
-# -----------------------------
+# --------------------------------------------------
 # Restaurant Selection
-# -----------------------------
+# --------------------------------------------------
 
 restaurant_names = sorted(
     df["name"].dropna().unique()
@@ -83,9 +94,9 @@ selected_restaurant = st.selectbox(
 )
 
 
-# -----------------------------
+# --------------------------------------------------
 # Recommendation Function
-# -----------------------------
+# --------------------------------------------------
 
 def recommend(name):
 
@@ -105,6 +116,7 @@ def recommend(name):
 
     top_indices = scores.argsort()[-11:][::-1]
 
+    # Remove selected restaurant itself
     top_indices = [
         i for i in top_indices
         if i != index
@@ -126,9 +138,9 @@ def recommend(name):
     ]
 
 
-# -----------------------------
-# Button
-# -----------------------------
+# --------------------------------------------------
+# Recommendation Button
+# --------------------------------------------------
 
 if st.button("🔍 Get Recommendations"):
 
@@ -136,24 +148,51 @@ if st.button("🔍 Get Recommendations"):
         selected_restaurant
     )
 
-    st.subheader("Recommended Restaurants")
+    st.subheader(
+        f"Recommended Restaurants for {selected_restaurant}"
+    )
 
-    for _, row in recommendations.iterrows():
+    if len(recommendations) > 0:
 
-        st.markdown("---")
+        for _, row in recommendations.iterrows():
 
-        st.subheader(row["name"])
+            st.markdown("---")
 
-        col1, col2 = st.columns(2)
+            st.subheader(row["name"])
 
-        with col1:
-            st.write("📍 Location:", row["location"])
-            st.write("🍽️ Cuisines:", row["cuisines"])
+            col1, col2 = st.columns(2)
 
-        with col2:
-            st.write("⭐ Rating:", row["rate"])
-            st.write("👍 Votes:", row["votes"])
-            st.write(
-                "📊 Similarity:",
-                round(row["Similarity Score"], 3)
-            )
+            with col1:
+
+                st.write(
+                    "📍 **Location:**",
+                    row["location"]
+                )
+
+                st.write(
+                    "🍽️ **Cuisines:**",
+                    row["cuisines"]
+                )
+
+            with col2:
+
+                st.write(
+                    "⭐ **Rating:**",
+                    row["rate"]
+                )
+
+                st.write(
+                    "👍 **Votes:**",
+                    row["votes"]
+                )
+
+                st.write(
+                    "📊 **Similarity:**",
+                    round(row["Similarity Score"], 3)
+                )
+
+    else:
+
+        st.warning(
+            "Restaurant not found."
+        )
