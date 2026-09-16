@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
-from scipy.sparse import csr_matrix
+from scipy.sparse import load_npz
 from sklearn.metrics.pairwise import cosine_similarity
 import os
 
@@ -18,7 +17,7 @@ st.set_page_config(
 
 
 # --------------------------------------------------
-# Check Files
+# Check Required Files
 # --------------------------------------------------
 
 if not os.path.exists("restaurant_data_small.pkl"):
@@ -42,45 +41,29 @@ df = pd.read_pickle("restaurant_data_small.pkl")
 # --------------------------------------------------
 
 try:
-
-    data = np.load(
-        "tfidf_matrix.npz",
-        allow_pickle=True
-    )
-
-    tfidf_matrix = csr_matrix(
-        (
-            data["data"],
-            data["indices"],
-            data["indptr"]
-        ),
-        shape=data["shape"]
-    )
+    tfidf_matrix = load_npz("tfidf_matrix.npz")
 
 except Exception as e:
-
     st.error("TF-IDF matrix file could not be loaded.")
     st.code(str(e))
     st.stop()
 
 
 # --------------------------------------------------
-# Check Matrix and Data
+# Check Data and Matrix
 # --------------------------------------------------
 
 if tfidf_matrix.shape[0] != len(df):
 
     st.error(
-        f"Data mismatch: Matrix has "
-        f"{tfidf_matrix.shape[0]} rows but dataframe "
-        f"has {len(df)} rows."
+        f"Data mismatch: Matrix has {tfidf_matrix.shape[0]} rows "
+        f"but dataframe has {len(df)} rows."
     )
-
     st.stop()
 
 
 # --------------------------------------------------
-# Title
+# Application Title
 # --------------------------------------------------
 
 st.title("🍴 Zomato Restaurant Recommendation System")
@@ -127,6 +110,7 @@ def recommend(name):
 
     top_indices = scores.argsort()[-11:][::-1]
 
+    # Remove selected restaurant
     top_indices = [
         i for i in top_indices
         if i != index
@@ -159,8 +143,7 @@ if st.button("🔍 Get Recommendations"):
     )
 
     st.subheader(
-        f"Recommended Restaurants for "
-        f"{selected_restaurant}"
+        f"Recommended Restaurants for {selected_restaurant}"
     )
 
     if len(recommendations) > 0:
@@ -207,6 +190,4 @@ if st.button("🔍 Get Recommendations"):
 
     else:
 
-        st.warning(
-            "Restaurant not found."
-        )
+        st.warning("Restaurant not found.")
