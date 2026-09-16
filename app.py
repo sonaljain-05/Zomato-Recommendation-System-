@@ -1,113 +1,116 @@
-
+```python
 import streamlit as st
 import pandas as pd
 import numpy as np
+
 from scipy.sparse import csr_matrix
 from sklearn.metrics.pairwise import cosine_similarity
 
+
+# --------------------------------------------------
+# PAGE SETTINGS
+# --------------------------------------------------
+
 st.set_page_config(
-    page_title="Zomato Recommendation",
+    page_title="Zomato Recommendation System",
     page_icon="🍴",
     layout="centered"
 )
 
-# ---------- BACKGROUND ----------
-st.markdown("""
-<style>
-.stApp {
-    background: linear-gradient(135deg, #fff5f5, #fff0e6);
-}
 
-.block-container {
-    max-width: 850px;
-    padding-top: 35px;
-}
+# --------------------------------------------------
+# CUSTOM DARK THEME
+# --------------------------------------------------
 
-.title-box {
-    text-align: center;
-    background: white;
-    padding: 20px;
-    border-radius: 20px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-    margin-bottom: 20px;
-}
+st.markdown(
+    """
+    <style>
 
-.food-img {
-    display: block;
-    margin: 15px auto 25px auto;
-    width: 100%;
-    max-width: 650px;
-    height: 230px;
-    object-fit: cover;
-    border-radius: 22px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-}
+    /* Main background */
+    .stApp {
+        background: #18181b;
+        color: #f5f5f5;
+    }
 
-.stButton > button {
-    width: 100%;
-    height: 50px;
-    border-radius: 12px;
-    font-size: 17px;
-    font-weight: bold;
-}
+    /* Keep app compact */
+    .block-container {
+        max-width: 850px;
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+    }
 
-.card {
-    background: white;
-    padding: 15px;
-    border-radius: 18px;
-    margin: 12px 0;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-}
-</style>
-""", unsafe_allow_html=True)
+    /* Main title */
+    .main-title {
+        text-align: center;
+        font-size: 36px;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 5px;
+    }
 
+    .subtitle {
+        text-align: center;
+        color: #a1a1aa;
+        font-size: 16px;
+        margin-bottom: 25px;
+    }
 
-# ---------- DATA ----------
-df = pd.read_pickle("restaurant_data_small.pkl")
+    /* Hero image */
+    .hero-image {
+        display: block;
+        width: 100%;
+        max-width: 700px;
+        height: 260px;
+        object-fit: cover;
+        margin: 0 auto 25px auto;
+        border-radius: 18px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+    }
 
-z = np.load("tfidf_matrix.npz", allow_pickle=False)
+    /* Selectbox label */
+    label {
+        color: #e4e4e7 !important;
+        font-weight: 600 !important;
+    }
 
-tfidf = csr_matrix(
-    (z["data"], z["indices"], z["indptr"]),
-    shape=tuple(z["shape"])
-)
+    /* Recommendation cards */
+    .restaurant-card {
+        background: #27272a;
+        border: 1px solid #3f3f46;
+        border-radius: 16px;
+        padding: 18px;
+        margin-bottom: 18px;
+        box-shadow: 0 5px 18px rgba(0, 0, 0, 0.25);
+    }
 
+    .restaurant-name {
+        color: #ffffff;
+        font-size: 21px;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
 
-# ---------- HEADER ----------
-st.markdown("""
-<div class="title-box">
-    <h1>🍴 Zomato Restaurant Finder</h1>
-    <p>Discover restaurants similar to your favourite place</p>
-</div>
-""", unsafe_allow_html=True)
+    .restaurant-info {
+        color: #d4d4d8;
+        font-size: 14px;
+        line-height: 1.7;
+    }
 
+    .score {
+        color: #fbbf24;
+        font-weight: 700;
+    }
 
-# ---------- FOOD IMAGE ----------
-st.markdown("""
-<img class="food-img"
-src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4">
-""", unsafe_allow_html=True)
+    /* Button */
+    .stButton > button {
+        width: 100%;
+        border-radius: 12px;
+        height: 50px;
+        font-size: 17px;
+        font-weight: 700;
+    }
 
-
-# ---------- SELECT ----------
-names = sorted(df["name"].dropna().unique())
-
-selected = st.selectbox(
-    "🔎 Select Restaurant",
-    names
-)
-
-
-# ---------- BUTTON ----------
-if st.button(
-    "🔍 Find Similar Restaurants",
-    type="primary",
-    width="stretch"
-):
-
-    index = df[
-        df["name"].str.lower() == selected.lower()
-    ].index[0]
-
-    scores = cosine_similarity(
-        tfidf[inde]()
+    </style>
+    """,
+    unsafe
+```
