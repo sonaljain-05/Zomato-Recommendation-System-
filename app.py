@@ -1,24 +1,27 @@
 import streamlit as st
-import os
+import numpy as np
+import zipfile
 
-st.title("TF-IDF File Check")
+st.title("TF-IDF NPZ Check")
 
 file_name = "tfidf_matrix.npz"
 
-if not os.path.exists(file_name):
-    st.error("tfidf_matrix.npz NOT FOUND")
-    st.stop()
+try:
+    with zipfile.ZipFile(file_name, "r") as z:
 
-# File size
-file_size = os.path.getsize(file_name)
+        st.write("Files inside NPZ:")
+        st.write(z.namelist())
 
-st.write("File size:", file_size, "bytes")
-st.write("File size:", round(file_size / (1024 * 1024), 2), "MB")
+        for file in z.namelist():
+            st.write(f"Checking: {file}")
 
+            with z.open(file) as f:
+                data = np.load(f, allow_pickle=True)
 
-# Read first few bytes
-with open(file_name, "rb") as f:
-    first_bytes = f.read(100)
+                st.write("dtype:", data.dtype)
+                st.write("shape:", data.shape)
 
-st.write("First bytes of file:")
-st.code(str(first_bytes))
+except Exception as e:
+
+    st.error("NPZ inspection failed")
+    st.code(str(e))
