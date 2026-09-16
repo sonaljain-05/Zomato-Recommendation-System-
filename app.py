@@ -1,4 +1,4 @@
-
+```python id="k8m3x2"
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -6,8 +6,8 @@ from scipy.sparse import csr_matrix
 from sklearn.metrics.pairwise import cosine_similarity
 
 st.set_page_config(
-    page_title="Zomato Recommendation",
-    page_icon="🍴",
+    page_title="FoodMatch AI",
+    page_icon="🍽️",
     layout="centered"
 )
 
@@ -15,90 +15,80 @@ st.set_page_config(
 df = pd.read_pickle("restaurant_data_small.pkl")
 
 z = np.load("tfidf_matrix.npz", allow_pickle=False)
-
 tfidf = csr_matrix(
     (z["data"], z["indices"], z["indptr"]),
     shape=tuple(z["shape"])
 )
 
-# ---------- HEADER ----------
-st.title("🍴 Zomato Restaurant Finder")
-st.caption("Find restaurants similar to your favourite place")
+# ---------- FRONT DESIGN ----------
+st.markdown("""
+<style>
 
-# ---------- RESTAURANT SELECT ----------
-names = sorted(df["name"].dropna().unique())
+.block-container {
+    max-width: 850px;
+    padding-top: 2rem;
+}
 
-selected = st.selectbox(
-    "Select Restaurant",
-    names
-)
+.hero {
+    text-align: center;
+    padding: 10px 0 25px;
+}
 
-# ---------- BUTTON ----------
-if st.button(
-    "🔍 Find Similar Restaurants",
-    type="primary",
-    width="stretch"
-):
+.hero h1 {
+    font-size: 42px;
+    margin-bottom: 5px;
+}
 
-    index = df[
-        df["name"].str.lower() == selected.lower()
-    ].index[0]
+.hero p {
+    color: #777;
+    font-size: 17px;
+}
 
-    scores = cosine_similarity(
-        tfidf[index],
-        tfidf
-    )[0]
+.search-box {
+    background: #f7f7f7;
+    padding: 22px;
+    border-radius: 20px;
+    margin: 10px 0 25px;
+}
 
-    top = scores.argsort()[-11:][::-1]
-    top = [i for i in top if i != index][:10]
+.restaurant {
+    background: white;
+    border-radius: 20px;
+    padding: 12px;
+    margin: 10px 0;
+    box-shadow: 0 4px 18px rgba(0,0,0,.10);
+}
 
-    st.subheader("Recommended Restaurants")
+.restaurant img {
+    width: 100%;
+    height: 170px;
+    object-fit: cover;
+    border-radius: 15px;
+}
 
-    images = [
-        "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38",
-        "https://images.unsplash.com/photo-1563379926898-05f4575a45d8",
-        "https://images.unsplash.com/photo-1555939594-58d7cb561ad1",
-        "https://images.unsplash.com/photo-1513104890138-7c749659a591",
-        "https://images.unsplash.com/photo-1547592180-85f173990554"
-    ]
+.match {
+    display: inline-block;
+    background: #e8f8ef;
+    color: #16834b;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 13px;
+    font-weight: bold;
+}
 
-    for row in range(0, len(top), 2):
+</style>
+""", unsafe_allow_html=True)
 
-        col1, col2 = st.columns(2)
 
-        for col, i in zip(
-            [col1, col2],
-            top[row:row + 2]
-        ):
+# ---------- HERO ----------
+st.markdown("""
+<div class="hero">
+    <h1>🍽️ FoodMatch AI</h1>
+    <p>Discover your next favourite restaurant</p>
+</div>
+""", unsafe_allow_html=True)
 
-            r = df.iloc[i]
 
-            with col:
-
-                st.image(
-                    images[i % len(images)],
-                    width=300
-                )
-
-                st.markdown(
-                    f"### 🍴 {r['name']}"
-                )
-
-                st.write(
-                    f"📍 {r['location']}"
-                )
-
-                st.write(
-                    f"🍛 {r['cuisines']}"
-                )
-
-                st.write(
-                    f"⭐ {r['rate']}   •   👍 {r['votes']:,}"
-                )
-
-                st.caption(
-                    f"AI Similarity: {scores[i]:.1%}"
-                )
-
-                st.divider()
-
+# ---------- MAIN IMAGE ----------
+st.im
+```
