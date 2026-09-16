@@ -1,4 +1,4 @@
-```python
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -80,4 +80,4 @@ st.markdown("""
 c1, c2, c3 = st.columns(3)
 
 c1.metric("🍴 Restaurants", len(df))
-```
+
