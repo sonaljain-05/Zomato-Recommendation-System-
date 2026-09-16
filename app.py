@@ -1,4 +1,4 @@
-```python id="k8m3x2"
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -90,5 +90,5 @@ st.markdown("""
 
 
 # ---------- MAIN IMAGE ----------
-st.im
-```
+
+
