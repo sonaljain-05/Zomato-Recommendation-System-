@@ -5,28 +5,15 @@ import os
 from scipy.sparse import csr_matrix
 from sklearn.metrics.pairwise import cosine_similarity
 
-# --------------------------------------------------
-
-# PAGE CONFIG
-
-# --------------------------------------------------
-
 st.set_page_config(
 page_title="Zomato Recommendation System",
 page_icon="🍽️",
 layout="centered"
 )
 
-# --------------------------------------------------
-
-# DARK UI
-
-# --------------------------------------------------
-
 st.markdown("""
 
 <style>
-
 .stApp {
     background-color: #18181b;
     color: white;
@@ -85,16 +72,9 @@ h1 {
     color: #fbbf24;
     font-weight: bold;
 }
-
 </style>
 
 """, unsafe_allow_html=True)
-
-# --------------------------------------------------
-
-# TITLE
-
-# --------------------------------------------------
 
 st.title("🍽️ Zomato Recommendation System")
 
@@ -103,24 +83,12 @@ st.markdown(
 unsafe_allow_html=True
 )
 
-# --------------------------------------------------
-
-# HERO IMAGE
-
-# --------------------------------------------------
-
 st.markdown("""
 
 <div class="hero">
     <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4">
 </div>
 """, unsafe_allow_html=True)
-
-# --------------------------------------------------
-
-# LOAD RESTAURANT DATA
-
-# --------------------------------------------------
 
 data_file = "restaurant_data_small.pkl"
 matrix_file = "tfidf_matrix.npz"
@@ -134,12 +102,6 @@ st.error("tfidf_matrix.npz file not found.")
 st.stop()
 
 df = pd.read_pickle(data_file)
-
-# --------------------------------------------------
-
-# CHECK COLUMNS
-
-# --------------------------------------------------
 
 required_columns = [
 "name",
@@ -161,8 +123,135 @@ st.error(
 )
 st.stop()
 
-# --------------------------------------------------
+try:
+z = np.load(
+matrix_file,
+allow_pickle=False
+)
 
-# LOAD TF-IDF MATRIX
+```
+data = z["data"]
+indices = z["indices"]
+indptr = z["indptr"]
+shape = tuple(z["shape"])
 
-# ------------------------------------
+tfidf_matrix = csr_matrix(
+    (data, indices, indptr),
+    shape=shape
+)
+```
+
+except Exception as e:
+st.error("TF-IDF matrix load nahi ho paayi.")
+st.write(e)
+st.stop()
+
+restaurant_names = sorted(
+df["name"]
+.dropna()
+.astype(str)
+.unique()
+)
+
+selected_restaurant = st.selectbox(
+"🍴 Select a restaurant",
+restaurant_names
+)
+
+def recommend(name):
+
+```
+matches = df[
+    df["name"].astype(str).str.lower()
+    == name.lower()
+]
+
+if len(matches) == 0:
+    return pd.DataFrame()
+
+index = matches.index[0]
+
+scores = cosine_similarity(
+    tfidf_matrix[index],
+    tfidf_matrix
+)[0]
+
+top_indices = scores.argsort()[-11:][::-1]
+
+top_indices = [
+    i
+    for i in top_indices
+    if i != index
+][:10]
+
+result = df.iloc[top_indices].copy()
+
+result["Similarity Score"] = scores[top_indices]
+
+return result[
+    [
+        "name",
+        "location",
+        "cuisines",
+        "rate",
+        "votes",
+        "Similarity Score"
+    ]
+]
+```
+
+if st.button(
+"🔍 Find Similar Restaurants",
+use_container_width=True,
+type="primary"
+):
+
+```
+recommendations = recommend(
+    selected_restaurant
+)
+
+if recommendations.empty:
+    st.warning("No recommendations found.")
+
+else:
+    st.subheader("✨ Recommended Restaurants")
+
+    for _, row in recommendations.iterrows():
+
+        rating = row["rate"]
+        votes = row["votes"]
+        similarity = row["Similarity Score"]
+
+        st.markdown(
+            f"""
+            <div class="restaurant-card">
+
+                <div class="restaurant-name">
+                    🍴 {row["name"]}
+                </div>
+
+                <div class="info">
+                    📍 {row["location"]}
+                </div>
+
+                <div class="info">
+                    🍛 {row["cuisines"]}
+                </div>
+
+                <div class="info">
+                    ⭐ Rating: {rating:.1f}
+                </div>
+
+                <div class="info">
+                    👍 Votes: {int(votes)}
+                </div>
+
+                <div class="score">
+                    🎯 Similarity Score: {similarity:.2f}
+                </div>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
