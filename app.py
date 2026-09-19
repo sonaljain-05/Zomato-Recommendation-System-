@@ -30,7 +30,7 @@ st.markdown(
     font-size: 38px;
     font-weight: 800;
     color: #7f1d1d;
-    margin-bottom: 4px;
+    margin-bottom: 5px;
 }
 
 .subtitle {
@@ -40,27 +40,12 @@ st.markdown(
     margin-bottom: 25px;
 }
 
-.hero {
-    width: 100%;
-    height: 330px;
-    object-fit: cover;
-    border-radius: 20px;
-    margin-bottom: 25px;
-}
-
-.section-title {
-    color: #7f1d1d;
-    font-size: 24px;
-    font-weight: 700;
-    margin-top: 30px;
-    margin-bottom: 15px;
-}
-
 .restaurant-card {
     background: #ffffff;
     border-radius: 18px;
     padding: 20px;
     margin-top: 15px;
+    margin-bottom: 15px;
     border: 1px solid #fed7aa;
     box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.08);
 }
@@ -68,7 +53,7 @@ st.markdown(
 .restaurant-name {
     color: #7f1d1d;
     font-size: 21px;
-    font-weight: 750;
+    font-weight: 700;
     margin-bottom: 10px;
 }
 
@@ -83,6 +68,14 @@ st.markdown(
     font-size: 15px;
     font-weight: 700;
     margin-top: 8px;
+}
+
+.recommendation-title {
+    color: #7f1d1d;
+    font-size: 25px;
+    font-weight: 700;
+    margin-top: 30px;
+    margin-bottom: 15px;
 }
 
 </style>
@@ -102,15 +95,12 @@ st.markdown(
 unsafe_allow_html=True
 )
 
-st.markdown(
-""" <img
-     class="hero"
-     src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4"
-     alt="Restaurant"
- >
-""",
-unsafe_allow_html=True
+st.image(
+"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4",
+width=900
 )
+
+st.write("")
 
 df = pd.read_pickle("restaurant_data_small.pkl")
 
@@ -131,7 +121,10 @@ shape=tuple(z["shape"])
 df = df.reset_index(drop=True)
 
 restaurant_names = sorted(
-df["name"].dropna().astype(str).unique()
+df["name"]
+.dropna()
+.astype(str)
+.unique()
 )
 
 selected_restaurant = st.selectbox(
@@ -139,5 +132,12 @@ selected_restaurant = st.selectbox(
 restaurant_names
 )
 
-selected_index = df.index[
-df["name"].astype(str) == selected]
+st.write("")
+
+find_button = st.button(
+"🔍 Find Similar Restaurants",
+type="primary",
+use_container_width=True
+)
+
+
