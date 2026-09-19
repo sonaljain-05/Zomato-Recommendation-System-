@@ -5,139 +5,166 @@ from scipy.sparse import csr_matrix
 from sklearn.metrics.pairwise import cosine_similarity
 
 st.set_page_config(
-page_title="Zomato Recommendation System",
-page_icon="🍽️",
-layout="centered"
+    page_title="Zomato Recommendation",
+    page_icon="🍽️",
+    layout="centered"
 )
 
-st.markdown(
-""" <style>
-
-
+# CSS
+st.markdown("""
+<style>
 .stApp {
-    background: #fff7ed;
-    color: #27272a;
+    background-color: #18181b;
+    color: white;
 }
 
 .block-container {
-    max-width: 900px;
+    max-width: 700px;
     padding-top: 25px;
-    padding-bottom: 50px;
 }
 
-.main-title {
+.title {
     text-align: center;
-    font-size: 38px;
-    font-weight: 800;
-    color: #7f1d1d;
-    margin-bottom: 5px;
+    font-size: 30px;
+    font-weight: bold;
 }
 
 .subtitle {
     text-align: center;
-    font-size: 16px;
-    color: #71717a;
-    margin-bottom: 25px;
-}
-
-.restaurant-card {
-    background: #ffffff;
-    border-radius: 18px;
-    padding: 20px;
-    margin-top: 15px;
+    color: #aaa;
     margin-bottom: 15px;
-    border: 1px solid #fed7aa;
-    box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.08);
 }
 
-.restaurant-name {
-    color: #7f1d1d;
-    font-size: 21px;
-    font-weight: 700;
-    margin-bottom: 10px;
+.card {
+    background-color: #27272a;
+    padding: 14px;
+    border-radius: 12px;
+    margin: 8px 0;
+    border: 1px solid #3f3f46;
 }
 
-.restaurant-info {
-    color: #52525b;
+.name {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.info {
+    color: #ccc;
     font-size: 14px;
-    line-height: 1.7;
+    margin-top: 5px;
 }
 
-.similarity {
-    color: #b45309;
-    font-size: 15px;
-    font-weight: 700;
-    margin-top: 8px;
+.score {
+    color: #fbbf24;
+    font-weight: bold;
+    margin-top: 5px;
 }
-
-.recommendation-title {
-    color: #7f1d1d;
-    font-size: 25px;
-    font-weight: 700;
-    margin-top: 30px;
-    margin-bottom: 15px;
-}
-
 </style>
-""",
-unsafe_allow_html=True
+""", unsafe_allow_html=True)
 
-
+# Header
+st.markdown(
+    '<div class="title">🍽️ Zomato Recommendation</div>',
+    unsafe_allow_html=True
 )
 
 st.markdown(
-'<div class="main-title">🍽️ Zomato Recommendation System</div>',
-unsafe_allow_html=True
+    '<div class="subtitle">Find restaurants similar to your favourite</div>',
+    unsafe_allow_html=True
 )
 
-st.markdown(
-'<div class="subtitle">Discover restaurants similar to your favourite place</div>',
-unsafe_allow_html=True
-)
-
-st.image(
-"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4",
-width=900
-)
-
-st.write("")
-
+# Load data
 df = pd.read_pickle("restaurant_data_small.pkl")
 
-z = np.load(
-"tfidf_matrix.npz",
-allow_pickle=False
-)
+z = np.load("tfidf_matrix.npz", allow_pickle=False)
 
 tfidf_matrix = csr_matrix(
-(
-z["data"],
-z["indices"],
-z["indptr"]
-),
-shape=tuple(z["shape"])
+    (z["data"], z["indices"], z["indptr"]),
+    shape=tuple(z["shape"])
 )
 
 df = df.reset_index(drop=True)
 
 restaurant_names = sorted(
-df["name"]
-.dropna()
-.astype(str)
-.unique()
+    df["name"].dropna().astype(str).unique()
 )
 
+# Restaurant selection
 selected_restaurant = st.selectbox(
-"🍴 Select a restaurant",
-restaurant_names
+    "🍴 Select a restaurant",
+    restaurant_names
 )
 
-st.write("")
+# Button
+if st.button(
+    "🔍 Get Recommendations",
+    use_container_width=True
+):
 
-find_button = st.button(
-"🔍 Find Similar Restaurants",
-type="primary",
-use_container_width=True
+    selected_index = df.index[
+        df["name"].astype(str) == selected_restaurant
+    ][0]
+
+    # Similarity
+    similarity_scores = cosine_similarity(
+        tfidf_matrix[selected_index],
+        tfidf_matrix
+    ).flatten()
+
+    result = df.copy()
+
+    result["Similarity"] = similarity_scores
+
+    result = result.drop(index=selected_index)
+
+    result = result.sort_values(
+        "Similarity",
+        ascending=False
+    ).head(10)
+
+    st.subheader("✨ Recommended Restaurants")
+
+    # Display as cards instead of table
+    for _, row in result.iterrows():
+
+        rating = pd.to_numeric(
+            row["rate"],
+            errors="coerce"
+        )
+
+        votes = pd.to_numeric(
+            row["votes"],
+            errors="coerce"
+        )
+
+        st.markdown(
+            f"""
+            <div class="card">
+                <div class="name">
+                    🍴 {row['name']}
+                </div>
+
+                <div class="info">
+                    📍 {row['location']}
+                </div>
+
+                <div class="info">
+                    🍜 {row['cuisines']}
+                </div>
+
+                <div class="info">
+                    ⭐ Rating: {rating:.1f}
+                    &nbsp;&nbsp; 👥 Votes: {int(votes)}
+                </div>
+
+                <div class="score">
+                    Similarity: {row['Similarity']:.2f}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+st.caption(
+    "Powered by TF-IDF & Cosine Similarity"
 )
-
-
