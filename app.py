@@ -26,7 +26,7 @@ st.markdown(
     <style>
 
     .stApp {
-        background-color: #FFC4F8;
+        background-color: #10473B;
         color: white;
     }
 
