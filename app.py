@@ -1,547 +1,197 @@
+```css
+<style>
 
-import streamlit as st
-import pandas as pd
-import numpy as np
-from scipy.sparse import csr_matrix
-from sklearn.metrics.pairwise import cosine_similarity
+.stApp {
+    background: linear-gradient(
+        135deg,
+        #fff7ed 0%,
+        #ffedd5 50%,
+        #fef3c7 100%
+    );
+    color: #292524;
+}
+
+.block-container {
+    max-width: 1250px;
+    padding-top: 45px;
+    padding-bottom: 60px;
+}
 
 
-# =========================================================
-# PAGE CONFIG
-# =========================================================
+/* =========================================
+   MAIN TITLE
+   ========================================= */
 
-st.set_page_config(
-    page_title="Zomato Recommendation",
-    page_icon="🍽️",
-    layout="wide"
-)
+.main-title {
+    font-size: 48px;
+    font-weight: 800;
+    color: #292524;
+    margin-bottom: 12px;
+    letter-spacing: -1px;
+}
+
+.subtitle {
+    color: #78716c;
+    font-size: 17px;
+    margin-bottom: 35px;
+}
 
 
-# =========================================================
-# CSS
-# =========================================================
+/* =========================================
+   LEFT PANEL
+   ========================================= */
 
-st.markdown(
-    """
-    <style>
+.left-box {
+    background-color: rgba(255, 255, 255, 0.92);
+    border: 1px solid #fed7aa;
+    border-radius: 24px;
+    padding: 28px;
+    box-shadow: 0 10px 30px rgba(120, 53, 15, 0.10);
+}
 
-    .stApp {
-        background-color: #110A3D;
-        color: white;
-    }
+.left-heading {
+    font-size: 32px;
+    font-weight: 800;
+    color: #292524;
+    margin-top: 24px;
+    margin-bottom: 12px;
+}
 
-    .block-container {
-        max-width: 1200px;
-        padding-top: 30px;
-        padding-bottom: 50px;
-    }
+.left-text {
+    color: #57534e;
+    font-size: 15px;
+    line-height: 1.8;
+    margin-bottom: 25px;
+}
+
+
+/* =========================================
+   LEFT MAIN FOOD IMAGE
+   ========================================= */
+
+.left-box img {
+    width: 100%;
+    height: 390px;
+    object-fit: cover;
+    border-radius: 18px;
+}
+
+
+/* =========================================
+   RIGHT SIDE
+   ========================================= */
+
+.recommend-title {
+    font-size: 32px;
+    font-weight: 800;
+    color: #292524;
+    margin-bottom: 8px;
+}
+
+.recommend-subtitle {
+    color: #78716c;
+    font-size: 15px;
+    margin-bottom: 28px;
+}
+
+
+/* =========================================
+   RESTAURANT DETAILS
+   ========================================= */
+
+.restaurant-name {
+    font-size: 20px;
+    font-weight: 700;
+    color: #292524;
+    margin-bottom: 8px;
+}
+
+.restaurant-info {
+    color: #57534e;
+    font-size: 14px;
+    margin: 7px 0;
+}
+
+.match {
+    color: #ea580c;
+    font-weight: 700;
+    font-size: 15px;
+    margin-top: 10px;
+}
+
+
+/* =========================================
+   BUTTON
+   ========================================= */
+
+div.stButton > button {
+    width: 100%;
+    height: 54px;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(
+        90deg,
+        #f97316,
+        #ea580c
+    );
+    color: white;
+    font-size: 17px;
+    font-weight: 700;
+    margin-top: 8px;
+    margin-bottom: 25px;
+}
+
+div.stButton > button:hover {
+    background: linear-gradient(
+        90deg,
+        #ea580c,
+        #c2410c
+    );
+    color: white;
+}
+
+
+/* =========================================
+   ALL FOOD IMAGES
+   ========================================= */
+
+div[data-testid="stImage"] img {
+    border-radius: 16px;
+}
+
+
+/* =========================================
+   RECOMMENDATION SPACING
+   ========================================= */
+
+div[data-testid="stHorizontalBlock"] {
+    margin-bottom: 10px;
+}
+
+
+/* =========================================
+   MOBILE
+   ========================================= */
+
+@media (max-width: 768px) {
 
     .main-title {
         font-size: 36px;
-        font-weight: 700;
-        color: white;
-        margin-bottom: 5px;
-    }
-
-    .subtitle {
-        color: #a1a1aa;
-        font-size: 15px;
-        margin-bottom: 25px;
-    }
-
-    .left-box {
-        background-color: #202023;
-        border: 1px solid #3f3f46;
-        border-radius: 20px;
-        padding: 20px;
     }
 
     .left-heading {
-        font-size: 28px;
-        font-weight: 700;
-        color: white;
-        margin-top: 15px;
+        font-size: 26px;
     }
 
-    .left-text {
-        color: #a1a1aa;
-        font-size: 14px;
-        line-height: 1.7;
-        margin-bottom: 20px;
+    .left-box img {
+        height: 280px;
     }
 
     .recommend-title {
         font-size: 26px;
-        font-weight: 700;
-        color: white;
-        margin-bottom: 5px;
     }
 
-    .recommend-subtitle {
-        color: #a1a1aa;
-        font-size: 14px;
-        margin-bottom: 20px;
-    }
+}
 
-    .restaurant-name {
-        font-size: 19px;
-        font-weight: 700;
-        color: white;
-        margin-bottom: 5px;
-    }
-
-    .restaurant-info {
-        color: #d4d4d8;
-        font-size: 13px;
-        margin: 5px 0;
-    }
-
-    .match {
-        color: #fbbf24;
-        font-weight: 700;
-        font-size: 14px;
-        margin-top: 8px;
-    }
-
-    div.stButton > button {
-        width: 100%;
-        height: 50px;
-        border-radius: 12px;
-        border: none;
-        background-color: #ef4444;
-        color: white;
-        font-size: 16px;
-        font-weight: 600;
-    }
-
-    div.stButton > button:hover {
-        background-color: #dc2626;
-        color: white;
-    }
-
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-
-# =========================================================
-# HEADER
-# =========================================================
-
-st.markdown(
-    '<div class="main-title">🍽️ Zomato AI Recommendation</div>',
-    unsafe_allow_html=True
-)
-
-st.markdown(
-    '<div class="subtitle">'
-    'Discover restaurants similar to the ones you already love.'
-    '</div>',
-    unsafe_allow_html=True
-)
-
-
-# =========================================================
-# LOAD RESTAURANT DATA
-# =========================================================
-
-try:
-    df = pd.read_pickle("restaurant_data_small.pkl")
-
-except FileNotFoundError:
-    st.error(
-        "❌ restaurant_data_small.pkl file नहीं मिली।"
-    )
-    st.stop()
-
-
-# =========================================================
-# LOAD TF-IDF MATRIX
-# =========================================================
-
-try:
-
-    z = np.load(
-        "tfidf_matrix.npz",
-        allow_pickle=False
-    )
-
-    tfidf_matrix = csr_matrix(
-        (
-            z["data"],
-            z["indices"],
-            z["indptr"]
-        ),
-        shape=tuple(z["shape"])
-    )
-
-except FileNotFoundError:
-
-    st.error(
-        "❌ tfidf_matrix.npz file नहीं मिली।"
-    )
-    st.stop()
-
-
-# =========================================================
-# CLEAN DATA
-# =========================================================
-
-df = df.reset_index(drop=True)
-
-df["name"] = (
-    df["name"]
-    .fillna("Unknown Restaurant")
-    .astype(str)
-)
-
-df["location"] = (
-    df["location"]
-    .fillna("Location unavailable")
-    .astype(str)
-)
-
-df["cuisines"] = (
-    df["cuisines"]
-    .fillna("Various cuisines")
-    .astype(str)
-)
-
-
-# =========================================================
-# FIVE FOOD IMAGES
-#
-# EXACTLY 5 DIFFERENT IMAGES
-# After image 5, image 1 starts again.
-# =========================================================
-
-food_images = [
-
-    "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=800&q=85",
-
-    "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=85",
-
-    "https://images.unsplash.com/photo-1563379091339-03246963d51a?auto=format&fit=crop&w=800&q=85",
-
-    "https://images.unsplash.com/photo-1630383249896-424e482df921?auto=format&fit=crop&w=800&q=85",
-
-    "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=85"
-]
-
-
-# =========================================================
-# MAIN TWO COLUMN LAYOUT
-# =========================================================
-
-left_column, right_column = st.columns(
-    [0.9, 1.1],
-    gap="large"
-)
-
-
-# =========================================================
-# LEFT SIDE
-# =========================================================
-
-with left_column:
-
-    st.markdown(
-        '<div class="left-box">',
-        unsafe_allow_html=True
-    )
-
-    # Static image
-    st.image(
-        "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=90",
-        use_container_width=True
-    )
-
-    st.markdown(
-        '<div class="left-heading">'
-        'Find Your Next Favourite 🍴'
-        '</div>',
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        '<div class="left-text">'
-        'Select a restaurant you already love and let our '
-        'recommendation system find similar restaurants for you.'
-        '<br><br>'
-        '✨ Smart recommendations<br>'
-        '🍜 Cuisine similarity<br>'
-        '🎯 TF-IDF + Cosine Similarity'
-        '</div>',
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        '</div>',
-        unsafe_allow_html=True
-    )
-
-
-# =========================================================
-# RIGHT SIDE
-# =========================================================
-
-with right_column:
-
-    st.markdown(
-        '<div class="recommend-title">'
-        '🍴 Restaurant Recommendations'
-        '</div>',
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        '<div class="recommend-subtitle">'
-        'Choose a restaurant and discover similar places.'
-        '</div>',
-        unsafe_allow_html=True
-    )
-
-
-    # -----------------------------------------------------
-    # RESTAURANT SELECTBOX
-    # -----------------------------------------------------
-
-    restaurant_names = sorted(
-        df["name"].unique()
-    )
-
-    selected_restaurant = st.selectbox(
-        "Select Restaurant",
-        restaurant_names
-    )
-
-
-    # -----------------------------------------------------
-    # RECOMMENDATION BUTTON
-    # -----------------------------------------------------
-
-    recommend_button = st.button(
-        "✨ Show Recommendations"
-    )
-
-
-    # =====================================================
-    # RECOMMENDATION LOGIC
-    # =====================================================
-
-    if recommend_button:
-
-        # Find selected restaurant
-        selected_index = df.index[
-            df["name"] == selected_restaurant
-        ][0]
-
-
-        # -------------------------------------------------
-        # COSINE SIMILARITY
-        # -------------------------------------------------
-
-        similarity_scores = cosine_similarity(
-            tfidf_matrix[selected_index],
-            tfidf_matrix
-        ).flatten()
-
-
-        # -------------------------------------------------
-        # CREATE RESULT DATAFRAME
-        # -------------------------------------------------
-
-        result = df.copy()
-
-        result["Similarity"] = similarity_scores
-
-
-        # Remove selected restaurant
-        result = result[
-            result["name"] != selected_restaurant
-        ]
-
-
-        # Sort by similarity
-        result = result.sort_values(
-            "Similarity",
-            ascending=False
-        )
-
-
-        # Remove duplicate restaurant/location
-        result = result.drop_duplicates(
-            subset=["name", "location"],
-            keep="first"
-        )
-
-
-        # -------------------------------------------------
-        # SHOW TOP 10
-        # -------------------------------------------------
-
-        result = result.head(10)
-
-
-        st.markdown(
-            "### ✨ Recommended For You"
-        )
-
-
-        # =================================================
-        # DISPLAY EACH RECOMMENDATION
-        # =================================================
-
-        for recommendation_number, (_, row) in enumerate(
-            result.iterrows()
-        ):
-
-            # -------------------------------------------------
-            # IMAGE CYCLING
-            #
-            # 1 -> Image 1
-            # 2 -> Image 2
-            # 3 -> Image 3
-            # 4 -> Image 4
-            # 5 -> Image 5
-            # 6 -> Image 1
-            # 7 -> Image 2
-            # 8 -> Image 3
-            # ...
-            # -------------------------------------------------
-
-            image_index = (
-                recommendation_number
-                % 5
-            )
-
-            image_url = food_images[
-                image_index
-            ]
-
-
-            # -------------------------------------------------
-            # RATING
-            # -------------------------------------------------
-
-            rating = pd.to_numeric(
-                row["rate"],
-                errors="coerce"
-            )
-
-            if pd.isna(rating):
-                rating_text = "N/A"
-            else:
-                rating_text = f"{rating:.1f}"
-
-
-            # -------------------------------------------------
-            # VOTES
-            # -------------------------------------------------
-
-            votes = pd.to_numeric(
-                row["votes"],
-                errors="coerce"
-            )
-
-            if pd.isna(votes):
-                votes = 0
-
-            votes = int(votes)
-
-
-            # -------------------------------------------------
-            # SIMILARITY
-            # -------------------------------------------------
-
-            similarity = float(
-                row["Similarity"]
-            )
-
-
-            # =================================================
-            # IMAGE + RESTAURANT INFORMATION
-            # =================================================
-
-            image_column, info_column = st.columns(
-                [0.42, 0.58],
-                gap="medium"
-            )
-
-
-            # -------------------------------------------------
-            # FOOD IMAGE
-            # -------------------------------------------------
-
-            with image_column:
-
-                st.image(
-                    image_url,
-                    use_container_width=True
-                )
-
-
-            # -------------------------------------------------
-            # RESTAURANT DETAILS
-            # -------------------------------------------------
-
-            with info_column:
-
-                st.markdown(
-                    f'<div class="restaurant-name">'
-                    f'🍴 {row["name"]}'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-
-                st.markdown(
-                    f'<div class="restaurant-info">'
-                    f'📍 {row["location"]}'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-
-                st.markdown(
-                    f'<div class="restaurant-info">'
-                    f'🍜 {row["cuisines"]}'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-
-                st.markdown(
-                    f'<div class="restaurant-info">'
-                    f'⭐ {rating_text} &nbsp; '
-                    f'👥 {votes} votes'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-
-                st.markdown(
-                    f'<div class="match">'
-                    f'🎯 {similarity:.0%} Match'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-
-
-            # -------------------------------------------------
-            # SEPARATOR
-            # -------------------------------------------------
-
-            st.divider()
-
-
-# =========================================================
-# FOOTER
-# =========================================================
-
-st.markdown(
-    '<p style="text-align:center;'
-    'color:#666;'
-    'font-size:12px;">'
-    'Powered by TF-IDF & Cosine Similarity 🍽️'
-    '</p>',
-    unsafe_allow_html=True
-)
-
+</style>
+```
