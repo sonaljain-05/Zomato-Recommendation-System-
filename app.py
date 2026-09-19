@@ -12,54 +12,79 @@ layout="centered"
 
 st.markdown(
 """ <style>
-.stApp {
-background-color: #18181b;
-color: white;
-}
 
+
+.stApp {
+    background: #fff7ed;
+    color: #27272a;
+}
 
 .block-container {
-    max-width: 850px;
-    padding-top: 30px;
+    max-width: 900px;
+    padding-top: 25px;
+    padding-bottom: 50px;
 }
 
-.title {
+.main-title {
     text-align: center;
-    font-size: 36px;
-    font-weight: bold;
-    color: white;
+    font-size: 38px;
+    font-weight: 800;
+    color: #7f1d1d;
+    margin-bottom: 4px;
 }
 
 .subtitle {
     text-align: center;
-    color: #bdbdbd;
+    font-size: 16px;
+    color: #71717a;
     margin-bottom: 25px;
 }
 
-.box {
-    background-color: #27272a;
-    padding: 18px;
-    border-radius: 15px;
+.hero {
+    width: 100%;
+    height: 330px;
+    object-fit: cover;
+    border-radius: 20px;
+    margin-bottom: 25px;
+}
+
+.section-title {
+    color: #7f1d1d;
+    font-size: 24px;
+    font-weight: 700;
+    margin-top: 30px;
+    margin-bottom: 15px;
+}
+
+.restaurant-card {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 20px;
     margin-top: 15px;
-    border: 1px solid #3f3f46;
+    border: 1px solid #fed7aa;
+    box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.08);
 }
 
-.restaurant {
-    font-size: 20px;
-    font-weight: bold;
-    color: white;
+.restaurant-name {
+    color: #7f1d1d;
+    font-size: 21px;
+    font-weight: 750;
+    margin-bottom: 10px;
 }
 
-.text {
-    color: #d4d4d8;
-    margin-top: 6px;
+.restaurant-info {
+    color: #52525b;
+    font-size: 14px;
+    line-height: 1.7;
 }
 
-.score {
-    color: #fbbf24;
-    font-weight: bold;
+.similarity {
+    color: #b45309;
+    font-size: 15px;
+    font-weight: 700;
     margin-top: 8px;
 }
+
 </style>
 """,
 unsafe_allow_html=True
@@ -68,18 +93,23 @@ unsafe_allow_html=True
 )
 
 st.markdown(
-'<div class="title">🍽️ Zomato Recommendation System</div>',
+'<div class="main-title">🍽️ Zomato Recommendation System</div>',
 unsafe_allow_html=True
 )
 
 st.markdown(
-'<div class="subtitle">Find restaurants similar to your favourite restaurant</div>',
+'<div class="subtitle">Discover restaurants similar to your favourite place</div>',
 unsafe_allow_html=True
 )
 
-st.image(
-"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4",
-use_container_width=True
+st.markdown(
+""" <img
+     class="hero"
+     src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4"
+     alt="Restaurant"
+ >
+""",
+unsafe_allow_html=True
 )
 
 df = pd.read_pickle("restaurant_data_small.pkl")
@@ -110,51 +140,4 @@ restaurant_names
 )
 
 selected_index = df.index[
-df["name"].astype(str) == selected_restaurant
-][0]
-
-similarity_scores = cosine_similarity(
-tfidf_matrix[selected_index],
-tfidf_matrix
-).flatten()
-
-result = df.copy()
-
-result["Similarity Score"] = similarity_scores
-
-result = result.drop(
-index=selected_index
-)
-
-result = result.sort_values(
-"Similarity Score",
-ascending=False
-)
-
-result = result.head(10)
-
-result["Rating"] = result["rate"].round(1)
-
-result["Votes"] = result["votes"].astype(int)
-
-result["Similarity"] = (
-result["Similarity Score"]
-.round(2)
-)
-
-result = result[
-[
-"name",
-"location",
-"cuisines",
-"Rating",
-"Votes",
-"Similarity"
-]
-]
-
-st.subheader("✨ Recommended Restaurants")
-
-st.dataframe(
-result,
-use_container_width=True,)
+df["name"].astype(str) == selected
