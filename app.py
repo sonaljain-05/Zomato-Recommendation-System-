@@ -17,7 +17,7 @@ background-color: #18181b;
 color: white;
 }
 
-```
+
 .block-container {
     max-width: 850px;
     padding-top: 30px;
@@ -63,7 +63,7 @@ color: white;
 </style>
 """,
 unsafe_allow_html=True
-```
+
 
 )
 
