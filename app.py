@@ -17,7 +17,7 @@ background-color: #18181b;
 color: white;
 }
 
-```
+
 .block-container {
     max-width: 850px;
     padding-top: 30px;
@@ -119,7 +119,7 @@ type="primary",
 use_container_width=True
 ):
 
-```
+
 selected_rows = df[
     df["name"].astype(str).str.lower()
     == selected.lower()
@@ -146,4 +146,4 @@ for i in best_indexes:
     row = df.iloc[i]
 
     st.markdown(
-```
+
