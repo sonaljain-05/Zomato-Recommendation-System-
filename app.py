@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import os
 from scipy.sparse import csr_matrix
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -11,21 +10,23 @@ page_icon="🍽️",
 layout="centered"
 )
 
-st.markdown("""
-
-<style>
+st.markdown(
+""" <style>
 .stApp {
-    background-color: #18181b;
-    color: white;
+background-color: #18181b;
+color: white;
 }
 
+```
 .block-container {
     max-width: 850px;
-    padding-top: 2rem;
+    padding-top: 30px;
 }
 
-h1 {
+.title {
     text-align: center;
+    font-size: 38px;
+    font-weight: bold;
     color: white;
 }
 
@@ -35,223 +36,114 @@ h1 {
     margin-bottom: 25px;
 }
 
-.hero {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 25px;
-}
-
-.hero img {
-    width: 100%;
-    max-width: 700px;
-    height: 260px;
-    object-fit: cover;
-    border-radius: 18px;
-}
-
-.restaurant-card {
+.card {
     background-color: #27272a;
     padding: 18px;
-    border-radius: 15px;
     margin-top: 15px;
+    border-radius: 15px;
     border: 1px solid #3f3f46;
 }
 
-.restaurant-name {
-    font-size: 20px;
+.name {
+    font-size: 21px;
     font-weight: bold;
     color: white;
 }
 
-.info {
+.details {
     color: #d4d4d8;
-    margin-top: 5px;
+    margin-top: 6px;
 }
 
-.score {
+.similarity {
     color: #fbbf24;
     font-weight: bold;
+    margin-top: 8px;
 }
 </style>
+""",
+unsafe_allow_html=True
+```
 
-""", unsafe_allow_html=True)
-
-st.title("🍽️ Zomato Recommendation System")
+)
 
 st.markdown(
-'<p class="subtitle">Find restaurants similar to your favourite restaurant</p>',
+'<div class="title">🍽️ Zomato Recommendation System</div>',
 unsafe_allow_html=True
 )
 
-st.markdown("""
-
-<div class="hero">
-    <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4">
-</div>
-""", unsafe_allow_html=True)
-
-data_file = "restaurant_data_small.pkl"
-matrix_file = "tfidf_matrix.npz"
-
-if not os.path.exists(data_file):
-st.error("restaurant_data_small.pkl file not found.")
-st.stop()
-
-if not os.path.exists(matrix_file):
-st.error("tfidf_matrix.npz file not found.")
-st.stop()
-
-df = pd.read_pickle(data_file)
-
-required_columns = [
-"name",
-"location",
-"cuisines",
-"rate",
-"votes"
-]
-
-missing_columns = [
-col for col in required_columns
-if col not in df.columns
-]
-
-if missing_columns:
-st.error(
-"Required columns are missing: "
-+ ", ".join(missing_columns)
-)
-st.stop()
-
-try:
-z = np.load(
-matrix_file,
-allow_pickle=False
+st.markdown(
+'<div class="subtitle">Find restaurants similar to your favourite restaurant</div>',
+unsafe_allow_html=True
 )
 
-```
+st.image(
+"https://images.unsplash.com/photo-1517248135467-4c7edcad34c4",
+use_container_width=True
+)
+
+# Load restaurant data
+
+df = pd.read_pickle("restaurant_data_small.pkl")
+
+# Load TF-IDF matrix manually
+
+z = np.load("tfidf_matrix.npz", allow_pickle=False)
+
 data = z["data"]
 indices = z["indices"]
 indptr = z["indptr"]
 shape = tuple(z["shape"])
 
 tfidf_matrix = csr_matrix(
-    (data, indices, indptr),
-    shape=shape
+(data, indices, indptr),
+shape=shape
 )
-```
 
-except Exception as e:
-st.error("TF-IDF matrix load nahi ho paayi.")
-st.write(e)
-st.stop()
+# Restaurant names
 
 restaurant_names = sorted(
-df["name"]
-.dropna()
-.astype(str)
-.unique()
+df["name"].dropna().astype(str).unique()
 )
 
-selected_restaurant = st.selectbox(
+selected = st.selectbox(
 "🍴 Select a restaurant",
 restaurant_names
 )
 
-def recommend(name):
+# Recommendation button
+
+if st.button(
+"🔍 Find Similar Restaurants",
+type="primary",
+use_container_width=True
+):
 
 ```
-matches = df[
+selected_rows = df[
     df["name"].astype(str).str.lower()
-    == name.lower()
+    == selected.lower()
 ]
 
-if len(matches) == 0:
-    return pd.DataFrame()
+index = selected_rows.index[0]
 
-index = matches.index[0]
-
-scores = cosine_similarity(
+similarity = cosine_similarity(
     tfidf_matrix[index],
     tfidf_matrix
 )[0]
 
-top_indices = scores.argsort()[-11:][::-1]
+best_indexes = similarity.argsort()[-11:][::-1]
 
-top_indices = [
-    i
-    for i in top_indices
-    if i != index
-][:10]
+st.subheader("✨ Recommended Restaurants")
 
-result = df.iloc[top_indices].copy()
+count = 0
 
-result["Similarity Score"] = scores[top_indices]
+for i in best_indexes:
 
-return result[
-    [
-        "name",
-        "location",
-        "cuisines",
-        "rate",
-        "votes",
-        "Similarity Score"
-    ]
-]
+    if i == index:
+        continue
+
+    row = df.iloc[i]
+
+    st.markdown(
 ```
-
-if st.button(
-"🔍 Find Similar Restaurants",
-use_container_width=True,
-type="primary"
-):
-
-```
-recommendations = recommend(
-    selected_restaurant
-)
-
-if recommendations.empty:
-    st.warning("No recommendations found.")
-
-else:
-    st.subheader("✨ Recommended Restaurants")
-
-    for _, row in recommendations.iterrows():
-
-        rating = row["rate"]
-        votes = row["votes"]
-        similarity = row["Similarity Score"]
-
-        st.markdown(
-            f"""
-            <div class="restaurant-card">
-
-                <div class="restaurant-name">
-                    🍴 {row["name"]}
-                </div>
-
-                <div class="info">
-                    📍 {row["location"]}
-                </div>
-
-                <div class="info">
-                    🍛 {row["cuisines"]}
-                </div>
-
-                <div class="info">
-                    ⭐ Rating: {rating:.1f}
-                </div>
-
-                <div class="info">
-                    👍 Votes: {int(votes)}
-                </div>
-
-                <div class="score">
-                    🎯 Similarity Score: {similarity:.2f}
-                </div>
-
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
