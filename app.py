@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -142,13 +143,21 @@ st.markdown(
 
 
 # =====================================================
-# LOAD DATA
+# LOAD RESTAURANT DATA
 # =====================================================
 
 try:
-    df = pd.read_pickle("restaurant_data_small.pkl")
+
+    df = pd.read_pickle(
+        "restaurant_data_small.pkl"
+    )
+
 except FileNotFoundError:
-    st.error("❌ restaurant_data_small.pkl नहीं मिली।")
+
+    st.error(
+        "❌ restaurant_data_small.pkl नहीं मिली।"
+    )
+
     st.stop()
 
 
@@ -174,7 +183,10 @@ try:
 
 except FileNotFoundError:
 
-    st.error("❌ tfidf_matrix.npz नहीं मिली।")
+    st.error(
+        "❌ tfidf_matrix.npz नहीं मिली।"
+    )
+
     st.stop()
 
 
@@ -204,337 +216,42 @@ df["cuisines"] = (
 
 
 # =====================================================
-# FOOD IMAGES
+# FOOD IMAGE LIST
+#
+# IMPORTANT:
+# First 5 recommendations get 5 DIFFERENT images.
+# 6th recommendation starts repeating from image 1.
 # =====================================================
 
-food_images = {
-
-    "pizza":
-        "https://images.unsplash.com/photo-1574071318508-1cdbab80d002"
-        "?auto=format&fit=crop&w=800&q=85",
-
-    "burger":
-        "https://images.unsplash.com/photo-1568901346375-23c9450c58cd"
-        "?auto=format&fit=crop&w=800&q=85",
-
-    "biryani":
-        "https://images.unsplash.com/photo-1563379091339-03246963d51a"
-        "?auto=format&fit=crop&w=800&q=85",
-
-    "south indian":
-        "https://images.unsplash.com/photo-1630383249896-424e482df921"
-        "?auto=format&fit=crop&w=800&q=85",
-
-    "chinese":
-        "https://images.unsplash.com/photo-1563245372-f21724e3856d"
-        "?auto=format&fit=crop&w=800&q=85",
-
-    "sandwich":
-        "https://images.unsplash.com/photo-1528735602780-2552fd46c7af"
-        "?auto=format&fit=crop&w=800&q=85",
-
-    "dessert":
-        "https://images.unsplash.com/photo-1551024506-0bccd828d307"
-        "?auto=format&fit=crop&w=800&q=85",
-
-    "cafe":
-        "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb"
-        "?auto=format&fit=crop&w=800&q=85",
-
-    "default":
-        "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4"
-        "?auto=format&fit=crop&w=800&q=85"
-}
-
-
-# =====================================================
-# IMAGE FUNCTION
-# =====================================================
-
-def get_food_image(cuisine):
-
-    cuisine = str(cuisine).lower()
-
-    if "pizza" in cuisine:
-        return food_images["pizza"]
-
-    if "burger" in cuisine:
-        return food_images["burger"]
-
-    if "biryani" in cuisine:
-        return food_images["biryani"]
-
-    if "south indian" in cuisine:
-        return food_images["south indian"]
-
-    if "chinese" in cuisine:
-        return food_images["chinese"]
-
-    if "sandwich" in cuisine:
-        return food_images["sandwich"]
-
-    if "dessert" in cuisine:
-        return food_images["dessert"]
-
-    if "cafe" in cuisine:
-        return food_images["cafe"]
-
-    return food_images["default"]
-
-
-# =====================================================
-# TWO COLUMN LAYOUT
-# =====================================================
-
-left_column, right_column = st.columns(
-    [0.9, 1.1],
-    gap="large"
-)
-
-
-# =====================================================
-# LEFT SIDE
-# =====================================================
-
-with left_column:
-
-    st.markdown(
-        '<div class="left-box">',
-        unsafe_allow_html=True
-    )
-
-    st.image(
-        "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4"
-        "?auto=format&fit=crop&w=900&q=90",
-        use_container_width=True
-    )
-
-    st.markdown(
-        '<div class="left-heading">'
-        'Find Your Next Favourite 🍴'
-        '</div>',
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        '<div class="left-text">'
-        'Select a restaurant you already love and let our '
-        'recommendation system find similar restaurants for you.'
-        '<br><br>'
-        '✨ Smart recommendations<br>'
-        '🍜 Cuisine similarity<br>'
-        '🎯 TF-IDF + Cosine Similarity'
-        '</div>',
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        '</div>',
-        unsafe_allow_html=True
-    )
-
-
-# =====================================================
-# RIGHT SIDE
-# =====================================================
-
-with right_column:
-
-    st.markdown(
-        '<div class="recommend-title">'
-        '🍴 Restaurant Recommendations'
-        '</div>',
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        '<div class="recommend-subtitle">'
-        'Choose a restaurant and discover similar places.'
-        '</div>',
-        unsafe_allow_html=True
-    )
-
-
-    # Restaurant names
-    restaurant_names = sorted(
-        df["name"].unique()
-    )
-
-
-    # Select restaurant
-    selected_restaurant = st.selectbox(
-        "Select Restaurant",
-        restaurant_names
-    )
-
-
-    # Recommendation button
-    recommend_button = st.button(
-        "✨ Show Recommendations"
-    )
-
-
-    # =================================================
-    # RECOMMENDATION LOGIC
-    # =================================================
-
-    if recommend_button:
-
-        selected_index = df.index[
-            df["name"] == selected_restaurant
-        ][0]
-
-
-        # Calculate similarity
-        similarity_scores = cosine_similarity(
-            tfidf_matrix[selected_index],
-            tfidf_matrix
-        ).flatten()
-
-
-        result = df.copy()
-
-        result["Similarity"] = similarity_scores
-
-
-        # Remove selected restaurant
-        result = result[
-            result["name"] != selected_restaurant
-        ]
-
-
-        # Sort
-        result = result.sort_values(
-            "Similarity",
-            ascending=False
-        )
-
-
-        # Remove duplicate name + location
-        result = result.drop_duplicates(
-            subset=["name", "location"],
-            keep="first"
-        )
-
-
-        # Top 6
-        result = result.head(6)
-
-
-        st.markdown(
-            "### ✨ Recommended For You"
-        )
-
-
-        # =================================================
-        # DISPLAY RECOMMENDATIONS
-        # =================================================
-
-        for _, row in result.iterrows():
-
-            # Rating
-            rating = pd.to_numeric(
-                row["rate"],
-                errors="coerce"
-            )
-
-            if pd.isna(rating):
-                rating_text = "N/A"
-            else:
-                rating_text = f"{rating:.1f}"
-
-
-            # Votes
-            votes = pd.to_numeric(
-                row["votes"],
-                errors="coerce"
-            )
-
-            if pd.isna(votes):
-                votes = 0
-
-            votes = int(votes)
-
-
-            # Similarity
-            similarity = float(
-                row["Similarity"]
-            )
-
-
-            # Food image
-            image_url = get_food_image(
-                row["cuisines"]
-            )
-
-
-            # ---------------------------------------------
-            # RECOMMENDATION ROW
-            # ---------------------------------------------
-
-            image_column, info_column = st.columns(
-                [0.42, 0.58],
-                gap="medium"
-            )
-
-
-            with image_column:
-
-                st.image(
-                    image_url,
-                    use_container_width=True
-                )
-
-
-            with info_column:
-
-                st.markdown(
-                    f'<div class="restaurant-name">'
-                    f'🍴 {row["name"]}'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-
-                st.markdown(
-                    f'<div class="restaurant-info">'
-                    f'📍 {row["location"]}'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-
-                st.markdown(
-                    f'<div class="restaurant-info">'
-                    f'🍜 {row["cuisines"]}'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-
-                st.markdown(
-                    f'<div class="restaurant-info">'
-                    f'⭐ {rating_text} &nbsp; '
-                    f'👥 {votes} votes'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-
-                st.markdown(
-                    f'<div class="match">'
-                    f'🎯 {similarity:.0%} Match'
-                    f'</div>',
-                    unsafe_allow_html=True
-                )
-
-
-            st.divider()
-
-
-# =====================================================
-# FOOTER
-# =====================================================
-
-st.markdown(
-    '<p style="text-align:center;color:#666;font-size:12px;">'
-    'Powered by TF-IDF & Cosine Similarity 🍽️'
-    '</p>',
-    unsafe_allow_html=True
-)
+food_images = [
+
+    # 1. Pizza
+    "https://images.unsplash.com/"
+    "photo-1574071318508-1cdbab80d002"
+    "?auto=format&fit=crop&w=800&q=85",
+
+    # 2. Burger
+    "https://images.unsplash.com/"
+    "photo-1568901346375-23c9450c58cd"
+    "?auto=format&fit=crop&w=800&q=85",
+
+    # 3. Biryani
+    "https://images.unsplash.com/"
+    "photo-1563379091339-03246963d51a"
+    "?auto=format&fit=crop&w=800&q=85",
+
+    # 4. South Indian
+    "https://images.unsplash.com/"
+    "photo-1630383249896-424e482df921"
+    "?auto=format&fit=crop&w=800&q=85",
+
+    # 5. Chinese
+    "https://images.unsplash.com/"
+    "photo-1563245372-f21724e3856d"
+    "?auto=format&fit=crop&w=800&q=85",
+
+    # 6. Sandwich
+    "https://images.unsplash.com/"
+    "photo-1528735602780-2552fd46c7af"
+    "?auto=format&fit=crop&
+```
