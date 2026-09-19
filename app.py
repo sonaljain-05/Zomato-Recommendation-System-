@@ -140,4 +140,4 @@ restaurant_names
 )
 
 selected_index = df.index[
-df["name"].astype(str) == selected
+df["name"].astype(str) == selected]
