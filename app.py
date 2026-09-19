@@ -157,4 +157,4 @@ st.subheader("✨ Recommended Restaurants")
 
 st.dataframe(
 result,
-use_container_width=True,
+use_container_width=True,)
